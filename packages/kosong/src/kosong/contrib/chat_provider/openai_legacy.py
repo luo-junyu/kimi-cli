@@ -122,6 +122,12 @@ class OpenAILegacy:
                 stream=self.stream,
                 stream_options={"include_usage": True} if self.stream else omit,
                 reasoning_effort=self._reasoning_effort,
+                extra_body={
+                    "provider": {
+                        "order": ["openai"],
+                        "allow_fallbacks": False,
+                    }
+                },
                 **generation_kwargs,
             )
             return OpenAILegacyStreamedMessage(response, self._reasoning_key)

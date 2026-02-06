@@ -169,6 +169,12 @@ class OpenAIResponses:
                 input=inputs,
                 tools=[_convert_tool(tool) for tool in tools],
                 store=False,
+                extra_body={
+                    "provider": {
+                        "order": ["openai"],
+                        "allow_fallbacks": False,
+                    }
+                },
                 **generation_kwargs,
             )
             return OpenAIResponsesStreamedMessage(response)

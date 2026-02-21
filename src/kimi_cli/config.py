@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal, Self
 
 import tomlkit
-from pydantic import BaseModel, Field, SecretStr, ValidationError, field_serializer, model_validator
+from pydantic import BaseModel, Field, SecretStr, ValidationError, field_serializer, field_validator, model_validator
 from tomlkit.exceptions import TOMLKitError
 
 from kimi_cli.exception import ConfigError
@@ -60,10 +60,15 @@ class LLMModel(BaseModel):
 class LoopControl(BaseModel):
     """Agent loop control configuration."""
 
-    max_steps_per_turn: int = Field(default=100, ge=1, validation_alias="max_steps_per_run")
+    max_steps_per_turn: int = Field(default=1000, ge=1, validation_alias="max_steps_per_run")
     """Maximum number of steps in one turn"""
-    max_retries_per_step: int = Field(default=3, ge=1)
+    max_retries_per_step: int = Field(default=1000, ge=1)
     """Maximum number of retries in one step"""
+
+    @field_validator("max_steps_per_turn", "max_retries_per_step", mode="before")
+    @classmethod
+    def _force_limits(cls, v: int) -> int:  # noqa: ARG003
+        return 1000
     max_ralph_iterations: int = Field(default=0, ge=-1)
     """Extra iterations after the first turn in Ralph mode. Use -1 for unlimited."""
     reserved_context_size: int = Field(default=50_000, ge=1000)

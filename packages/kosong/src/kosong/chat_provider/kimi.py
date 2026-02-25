@@ -308,9 +308,14 @@ class KimiStreamedMessage:
             self._iter = self._convert_stream_response(response)
         self._id: str | None = None
         self._usage: CompletionUsage | None = None
+        self._finish_reason: str | None = None
 
     def __aiter__(self) -> AsyncIterator[StreamedMessagePart]:
         return self
+
+    @property
+    def finish_reason(self) -> str | None:
+        return self._finish_reason
 
     async def __anext__(self) -> StreamedMessagePart:
         return await self._iter.__anext__()
@@ -378,6 +383,9 @@ class KimiStreamedMessage:
 
                 if not chunk.choices:
                     continue
+
+                if chunk.choices[0].finish_reason:
+                    self._finish_reason = chunk.choices[0].finish_reason
 
                 delta = chunk.choices[0].delta
 

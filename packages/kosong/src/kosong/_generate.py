@@ -75,6 +75,10 @@ async def generate(
     if not has_output:
         raise APIEmptyResponseError("The API returned an empty response.")
 
+    finish_reason = getattr(stream, "finish_reason", "stop")
+    if finish_reason is None:
+        raise APIEmptyResponseError("Stream ended without finish_reason, likely disconnected.")
+
     return GenerateResult(
         id=stream.id,
         message=message,

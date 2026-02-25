@@ -9,7 +9,7 @@ from kosong.chat_provider import (
     StreamedMessagePart,
     TokenUsage,
 )
-from kosong.message import ContentPart, Message, ToolCall
+from kosong.message import ContentPart, Message, TextPart, ToolCall
 from kosong.tooling import Tool
 from kosong.utils.aio import Callback, callback
 
@@ -71,7 +71,8 @@ async def generate(
         if isinstance(pending_part, ToolCall) and on_tool_call:
             await callback(on_tool_call, pending_part)
 
-    if not message.content and not message.tool_calls:
+    has_output = any(isinstance(c, TextPart) for c in message.content) or message.tool_calls
+    if not has_output:
         raise APIEmptyResponseError("The API returned an empty response.")
 
     return GenerateResult(

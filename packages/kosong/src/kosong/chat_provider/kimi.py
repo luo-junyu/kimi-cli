@@ -110,6 +110,7 @@ class Kimi:
         self.client: AsyncOpenAI = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
+            max_retries=1000,
             **client_kwargs,
         )
         """The underlying `AsyncOpenAI` client."""

@@ -122,6 +122,7 @@ class OpenAIResponses:
         self._client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
+            max_retries=1000,
             **client_kwargs,
         )
         self._generation_kwargs: OpenAIResponses.GenerationKwargs = {}
@@ -445,9 +446,14 @@ class OpenAIResponsesStreamedMessage:
             self._iter = self._convert_stream_response(response)
         self._id: str | None = None
         self._usage: ResponseUsage | None = None
+        self._finish_reason: str | None = None
 
     def __aiter__(self) -> AsyncIterator[StreamedMessagePart]:
         return self
+
+    @property
+    def finish_reason(self) -> str | None:
+        return self._finish_reason
 
     async def __anext__(self) -> StreamedMessagePart:
         return await self._iter.__anext__()
@@ -529,6 +535,7 @@ class OpenAIResponsesStreamedMessage:
                     yield ThinkPart(think=chunk.delta)
                 elif chunk.type == "response.completed":
                     self._usage = chunk.response.usage
+                    self._finish_reason = chunk.response.status
         except (OpenAIError, httpx.HTTPError) as e:
             raise convert_error(e) from e
 

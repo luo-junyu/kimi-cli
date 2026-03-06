@@ -30,7 +30,7 @@ from openai.types.shared.reasoning import Reasoning
 from openai.types.shared.reasoning_effort import ReasoningEffort
 from openai.types.shared_params.responses_model import ResponsesModel
 
-from kosong.chat_provider import ChatProvider, StreamedMessagePart, ThinkingEffort, TokenUsage
+from kosong.chat_provider import APIStatusError, ChatProvider, StreamedMessagePart, ThinkingEffort, TokenUsage
 from kosong.chat_provider.openai_common import (
     convert_error,
     reasoning_effort_to_thinking_effort,
@@ -536,6 +536,17 @@ class OpenAIResponsesStreamedMessage:
                 elif chunk.type == "response.completed":
                     self._usage = chunk.response.usage
                     self._finish_reason = chunk.response.status
+                elif chunk.type == "error":
+                    code = getattr(chunk, "code", None) or ""
+                    message = getattr(chunk, "message", "Unknown stream error")
+                    status_code = 429 if "rate_limit" in code or "rate limit" in message.lower() else 500
+                    raise APIStatusError(status_code, message)
+                elif chunk.type == "response.failed":
+                    error = getattr(chunk.response, "error", None)
+                    message = error.message if error else "Response failed"
+                    code = error.code if error else ""
+                    status_code = 429 if "rate_limit" in (code or "") or "rate limit" in message.lower() else 500
+                    raise APIStatusError(status_code, message)
         except (OpenAIError, httpx.HTTPError) as e:
             raise convert_error(e) from e
 
